@@ -26,9 +26,9 @@ void main()
     gl_Position = projectionMatrix * viewMatrix * worldPosition;
     passTexCoord = texCoord * scale;
 
-    passNormal = (transformationMatrix * vec4(normal, 0.0)).xyz;
-    toLight = lightPosition - worldPosition.xyz;
-    toCamera = (inverse(viewMatrix) * vec4(0.0, 0.0, 0.0, 1.0)).xyz - worldPosition.xyz;
+    passNormal = (transpose(inverse(viewMatrix * transformationMatrix)) * vec4(normal, 0.0)).xyz;
+    toLight = (viewMatrix * vec4(lightPosition, 1.0)).xyz - positionRelativeToCam.xyz;
+    toCamera = -positionRelativeToCam.xyz;
 
     float distance = length(positionRelativeToCam.xyz);
     visibility = exp(-pow((distance * density), gradient));

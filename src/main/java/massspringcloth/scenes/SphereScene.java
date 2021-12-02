@@ -38,15 +38,15 @@ public class SphereScene implements IScene {
             }
         }
 
-        massSpringCloth = new MassSpringCloth(new MassSpringModel(width, height, points), -1, true, 1, 0.8f, 500);
+        massSpringCloth = new MassSpringCloth(new MassSpringModel(width, height, points), -1, true, 1, 0.8f, 100);
 
         modelRenderer = new ModelRenderer();
 
         TexturedModel sphere = new TexturedModel(OBJLoader.loadMesh("models/sphere.obj"),
                 Texture.loadTexture("textures/white.png"));
         Entity entity = new Entity();
-        entity.setPosition(0, 29.9f, 0);
-        entity.setScale(20);
+        entity.setPosition(0, 30f, 0);
+        entity.setScale(19.5f);
         modeledEntities.put(sphere, new ArrayList<>() {{
             add(entity);
         }});

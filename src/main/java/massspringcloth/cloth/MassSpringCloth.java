@@ -33,8 +33,10 @@ public class MassSpringCloth {
     private int vertexVboId;
     private int textureVboId;
     private int normalsVboId;
+    private int tangentsVboId;
     private int indicesVboId;
     private Texture texture;
+    private Texture textureNormalMap;
 
     private int inputBufferId;
     private int outputBufferId;
@@ -68,6 +70,7 @@ public class MassSpringCloth {
         shaderProgram.createFragmentShader("shaders/cloth_frag.glsl");
         shaderProgram.link();
         shaderProgram.createUniform("texture_sampler");
+        shaderProgram.createUniform("texture_sampler_normal");
         shaderProgram.createUniform("transformationMatrix");
         shaderProgram.createUniform("projectionMatrix");
         shaderProgram.createUniform("viewMatrix");
@@ -105,6 +108,13 @@ public class MassSpringCloth {
         glEnableVertexAttribArray(2);
         glVertexAttribPointer(2, 4, GL_FLOAT, false, 0, 0);
 
+        // tangent vbo
+        tangentsVboId = glGenBuffers();
+        glBindBuffer(GL_ARRAY_BUFFER, tangentsVboId);
+        glBufferData(GL_ARRAY_BUFFER, massSpringModel.getVertexBufferLengthInBytes(), GL_STATIC_DRAW); // vertex buffer length same as tangent buffer length
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 4, GL_FLOAT, false, 0, 0);
+
         // index vbo
         indicesVboId = glGenBuffers();
         IntBuffer indicesBuffer = BufferUtils.createIntBuffer(massSpringModel.getIndices().length);
@@ -119,6 +129,7 @@ public class MassSpringCloth {
         count = massSpringModel.getIndices().length;
 
         texture = Texture.loadTexture("textures/cloth.png");
+        textureNormalMap = Texture.loadTexture("textures/cloth_normal.png");
 
         computeProgram = new ComputeShaderProgram();
         computeProgram.createComputeShader("shaders/cloth_compute.glsl");
@@ -150,10 +161,7 @@ public class MassSpringCloth {
             glEnableVertexAttribArray(2);
             glVertexAttribPointer(0, 4, GL_FLOAT, false, 0, 0);
             glVertexAttribPointer(1, 4, GL_FLOAT, false, 0, 0);
-            glVertexAttribPointer(2, 1, GL_FLOAT, false, 0, 0);
-            glVertexAttribPointer(3, 1, GL_FLOAT, false, 0, 0);
-            glVertexAttribPointer(4, 1, GL_FLOAT, false, 0, 0);
-            glVertexAttribPointer(5, 1, GL_FLOAT, false, 0, 0);
+            glVertexAttribPointer(2, 4, GL_FLOAT, false, 0, 0);
         }
         // output buffer
         {
@@ -165,10 +173,7 @@ public class MassSpringCloth {
             glEnableVertexAttribArray(2);
             glVertexAttribPointer(0, 4, GL_FLOAT, false, 0, 0);
             glVertexAttribPointer(1, 4, GL_FLOAT, false, 0, 0);
-            glVertexAttribPointer(2, 1, GL_FLOAT, false, 0, 0);
-            glVertexAttribPointer(3, 1, GL_FLOAT, false, 0, 0);
-            glVertexAttribPointer(4, 1, GL_FLOAT, false, 0, 0);
-            glVertexAttribPointer(5, 1, GL_FLOAT, false, 0, 0);
+            glVertexAttribPointer(2, 4, GL_FLOAT, false, 0, 0);
         }
     }
 
@@ -180,6 +185,7 @@ public class MassSpringCloth {
         shaderProgram.bind();
 
         shaderProgram.setUniform("texture_sampler", 0);
+        shaderProgram.setUniform("texture_sampler_normal", 1);
         shaderProgram.setUniform("viewMatrix", Transformation.getViewMatrix(camera));
         shaderProgram.setUniform("projectionMatrix", Transformation.getProjectionMatrix(FOV, window.getWidth(), window.getHeight(), Z_NEAR, Z_FAR));
         shaderProgram.setUniform("transformationMatrix", Transformation.getTransformationMatrix(entity));
@@ -189,19 +195,24 @@ public class MassSpringCloth {
 
         glActiveTexture(GL_TEXTURE0);
         texture.bind();
+        glActiveTexture(GL_TEXTURE1);
+        textureNormalMap.bind();
 
         glBindVertexArray(vaoId);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
         glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(3);
 
         glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, 0);
 
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glDisableVertexAttribArray(2);
+        glDisableVertexAttribArray(3);
         glBindVertexArray(0);
         texture.unbind();
+        textureNormalMap.unbind();
 
         shaderProgram.unbind();
 
@@ -235,6 +246,7 @@ public class MassSpringCloth {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, outputBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, vertexVboId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, normalsVboId);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, tangentsVboId);
 
         computeProgram.dispatch(width, height);
 
@@ -244,6 +256,7 @@ public class MassSpringCloth {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, 0);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, 0);
+        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, 0);
 
         computeProgram.unbind();
     }

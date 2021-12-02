@@ -3,10 +3,7 @@
 struct Point {
     vec4 position;
     vec4 velocity;
-    float locked;
-    float pad1;
-    float pad2;
-    float pad3;
+    vec4 data; // x = locked, yz = uv tex coord, w = padding
 };
 
 struct RenderDataPosition {
@@ -15,6 +12,10 @@ struct RenderDataPosition {
 
 struct RenderDataNormal {
     vec4 normal;
+};
+
+struct RenderDataTangent {
+    vec4 tangent;
 };
 
 // point data from the last iteration, do not write to this buffer
@@ -34,6 +35,10 @@ layout(binding = 2, std430) buffer renderDataPositionBuffer {
 // buffer where the calculated information will be stored that is used for rendering in the vertex/fragment shader
 layout(binding = 3, std430) buffer renderDataNormalBuffer {
     RenderDataNormal renderDataNormal[];
+};
+// buffer where the calculated information will be stored that is used for rendering in the vertex/fragment shader
+layout(binding = 4, std430) buffer renderDataTangentBuffer {
+    RenderDataTangent renderDataTangent[];
 };
 
 uniform float time;
@@ -67,6 +72,21 @@ vec3 calcNormal(vec3 pos1, vec3 pos2, vec3 pos3, vec3 position) {
     return cross(p1, p2) + cross(p2, p3);
 }
 
+vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec2 uv3) {
+    vec3 edge1 = pos2 - pos1;
+    vec3 edge2 = pos3 - pos1;
+    vec2 deltaUV1 = uv2 - uv1;
+    vec2 deltaUV2 = uv3 - uv1;
+
+    float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+    vec3 tangent = vec3(0.0);
+    tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+    tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+    tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+    return tangent;
+}
+
 void main() {
     uvec2 id = gl_GlobalInvocationID.xy;
 
@@ -78,9 +98,9 @@ void main() {
 
     pointOut[i].position = pointIn[i].position;
     pointOut[i].velocity = pointIn[i].velocity;
-    pointOut[i].locked = pointIn[i].locked;
+    pointOut[i].data = pointIn[i].data;
 
-    if (pointIn[i].locked == 0) {
+    if (pointIn[i].data.x == 0) {
         // external force
         vec4 force = vec4(0, -mass * gravity, 0, 0) + pointIn[i].velocity * -viscousDamping;
 
@@ -162,19 +182,42 @@ void main() {
     vec3 position = renderDataPosition[i].position.xyz;
     if (id.x > 0) {
         if (id.y > 0) {
-            normal += calcNormal(pointIn[i - 1].position.xyz, pointIn[i - width - 1].position.xyz, pointIn[i - width].position.xyz, position);
+            normal += calcNormal(pointOut[i - 1].position.xyz, pointOut[i - width - 1].position.xyz, pointOut[i - width].position.xyz, position);
         }
         if (id.y < height - 1) {
-            normal += calcNormal(pointIn[i + width].position.xyz, pointIn[i + width - 1].position.xyz, pointIn[i - 1].position.xyz, position);
+            normal += calcNormal(pointOut[i + width].position.xyz, pointOut[i + width - 1].position.xyz, pointOut[i - 1].position.xyz, position);
         }
     }
     if (id.x < width - 1) {
         if (id.y > 0) {
-            normal += calcNormal(pointIn[i - width].position.xyz, pointIn[i - width + 1].position.xyz, pointIn[i + 1].position.xyz, position);
+            normal += calcNormal(pointOut[i - width].position.xyz, pointOut[i - width + 1].position.xyz, pointOut[i + 1].position.xyz, position);
         }
         if (id.y < height - 1) {
-            normal += calcNormal(pointIn[i + 1].position.xyz, pointIn[i + width + 1].position.xyz, pointIn[i + width].position.xyz, position);
+            normal += calcNormal(pointOut[i + 1].position.xyz, pointOut[i + width + 1].position.xyz, pointOut[i + width].position.xyz, position);
         }
     }
     renderDataNormal[i].normal = vec4(normalize(normalSign * normal), 0.0);
+
+    // tangent
+    vec3 tangent = vec3(0.0);
+    if (id.x > 0) {
+        if (id.y > 0) {
+            tangent += calcTangent(position, pointOut[i - width - 1].position.xyz, pointOut[i - 1].position.xyz, pointOut[i].data.yz, pointOut[i - width - 1].data.yz, pointOut[i - 1].data.yz);
+            tangent += calcTangent(position, pointOut[i - width - 1].position.xyz, pointOut[i - width].position.xyz, pointOut[i].data.yz, pointOut[i - width - 1].data.yz, pointOut[i - width].data.yz);
+        }
+    }
+    if (id.x < width - 1) {
+        if (id.y < height - 1) {
+            tangent += calcTangent(position, pointOut[i + width + 1].position.xyz, pointOut[i + 1].position.xyz, pointOut[i].data.yz, pointOut[i + width + 1].data.yz, pointOut[i + 1].data.yz);
+            tangent += calcTangent(position, pointOut[i + width + 1].position.xyz, pointOut[i + width].position.xyz, pointOut[i].data.yz, pointOut[i + width + 1].data.yz, pointOut[i + width].data.yz);
+        }
+    }
+    if (id.x == 0 && id.y == height - 1) {
+        // top left corner
+        tangent = vec3(1.0, 0.0, 0.0); // or maybe take average of the two adjacent points
+    } else if (id.x == width - 1 && id.y == 0) {
+        // bottom right corner
+        tangent = vec3(1.0, 0.0, 0.0); // or maybe take average of the two adjacent points
+    }
+    renderDataTangent[i].tangent = vec4(normalize(tangent), 0.0);
 }

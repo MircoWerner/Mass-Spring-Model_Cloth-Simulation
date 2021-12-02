@@ -46,7 +46,7 @@ public class MassSpringClothRenderLogic implements IRenderLogic {
         terrainRenderer = new TerrainRenderer();
         camera = new ThirdPersonCamera();
 
-        light = new Light(new Vector3f(50, 100, 50), new Vector3f(1f, 1f, 1f));
+        light = new Light(new Vector3f(100, 80, 50), new Vector3f(1f, 1f, 1f));
 
         {
             Texture texture = Texture.loadTexture(Objects.requireNonNull(MassSpringClothRenderLogic.class.getClassLoader().getResourceAsStream("textures/scifi_panel_basecolor.png")));

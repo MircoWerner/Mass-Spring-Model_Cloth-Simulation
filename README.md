@@ -42,16 +42,16 @@ I have tested the program on a Linux system. In the maven configuration file (po
 <a name="code"></a>
 ## Information about the code
 1. The package `src/main/java/massspringcloth/` contains all the classes directly related to the construction and simulation of the cloth model.
-2. The package `src/main/java/renderengine` contains the classes needed to communicate with and access OpenGL.
-3. The resource folder `src/main/resources/shaders` contains the vertex, fragment and compute shaders for the program. Especially:
+2. The package `src/main/java/renderengine/` contains the classes needed to communicate with and access OpenGL.
+3. The resource folder `src/main/resources/shaders/` contains the vertex, fragment and compute shaders for the program. Especially:
    - `cloth_compute.glsl` is the compute shader where the main calculation of the new positions of the mass spring model happens.
    - `cloth_vert.glsl` and `cloth_frag.glsl` are the vertex and fragment shader to render the result.
 
-A few words to the program flow:
-1. When a scene is created by the `massspringcloth/simulation/SimulationController.java` the initial positions, velocities and locked points are defined.
+A few words about the program flow:
+1. When a `massspringcloth/scene/IScene` is created by the `massspringcloth/simulation/SimulationController.java` the initial positions, velocities and locked points are defined.
 2. They are passed to the `massspringcloth/cloth/MassSpringModel.java` where the vertices, texture coordinates and indices are calculated. 
-3. After that in the `massspringcloth/cloth/MassSpringCloth.java` the OpenGL buffers (vertex buffer objects (vbo)) for the vertex shader are created as well as the two buffers for the compute shader.
-4. When the simulation starts the compute shader is executed multiple times in parallel for each pixel. It computes the new positions from the positions in the input buffer and writes the updated data to the output buffer as well as to the position vbo of the vertex shader. After each compute shader execution, the input and output buffer of the compute shader is changed so that it gets the updated data as its new input.
+3. After that in the `massspringcloth/cloth/MassSpringCloth.java` the OpenGL buffers (vertex buffer objects (vbo)) for the vertex shader are created as well as the input and output buffers of the compute shader.
+4. When the simulation starts the compute shader is executed multiple times in parallel for each point. It computes the new positions from the positions in the input buffer and writes the updated data to the output buffer as well as to the position vbo of the vertex shader. After each compute shader execution, the input and output buffer of the compute shader is changed so that it gets the updated data as its new input.
 5. After the compute shader has run multiple times, the updated data in the vertex positions buffer is rendered by the vertex and fragment shader.
 6. Step four and five repeat until the simulation is stopped or the scene is changed.
 

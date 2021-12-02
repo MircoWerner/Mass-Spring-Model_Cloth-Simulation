@@ -41,9 +41,11 @@ public class MassSpringModel {
                 // locked
                 points[vertexPointer * 12 + 8] = point.locked;
 
+                // textureUV
+                points[vertexPointer * 12 + 9] = w / 4f;
+                points[vertexPointer * 12 + 10] = h / 4f;
+
                 // padding
-                points[vertexPointer * 12 + 9] = 0;
-                points[vertexPointer * 12 + 10] = 0;
                 points[vertexPointer * 12 + 11] = 0;
 
                 // texture
