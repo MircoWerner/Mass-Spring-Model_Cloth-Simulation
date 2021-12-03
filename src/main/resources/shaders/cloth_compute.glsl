@@ -53,12 +53,12 @@ uniform float springConstant;// spring constant >= 0, higher spring constant mak
 uniform int relaxation;// 1 if this compute shader call is for relaxation of the joints, 0 if call is for applying forces
 
 const float restingLengthHorizontal = 1;
-const float maxRestingLengthHorizontal = 1.1f * restingLengthHorizontal;
+const float maxRestingLengthHorizontal = 1.1 * restingLengthHorizontal;
 const float restingLengthVertical = 1;
-const float maxRestingLengthVertical = 1.1f * restingLengthVertical;
+const float maxRestingLengthVertical = 1.1 * restingLengthVertical;
 const float restingLengthDiagonal = sqrt(2);
-const float maxRestingLengthDiagonal = 1.1f * restingLengthDiagonal;
-const float restingLengthEpsilon = 0.01f;
+const float maxRestingLengthDiagonal = 1.1 * restingLengthDiagonal;
+const float restingLengthEpsilon = 0.01;
 const float gravity = 9.81;
 
 const vec3 sphere = vec3(0.0, 30.0, 0.0);
@@ -84,7 +84,7 @@ vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec2 uv3) 
     vec2 deltaUV1 = uv2 - uv1;
     vec2 deltaUV2 = uv3 - uv1;
 
-    float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+    float f = 1.0 / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
 
     vec3 tangent = vec3(0.0);
     tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
@@ -161,15 +161,15 @@ void applyForce(uvec2 id, uint i) {
     // collision
     if (sphereEnabled != 0) {
         vec3 toSphere = position.xyz - sphere;
-        if (length(toSphere) < sphereRadius + 0.05f) {
-            position.xyz = sphere + normalize(toSphere) * (sphereRadius + 0.05f);
-            velocity *= 0.9f;
+        if (length(toSphere) < sphereRadius + 0.05) {
+            position.xyz = sphere + normalize(toSphere) * (sphereRadius + 0.05);
+            velocity *= 0.9;
         }
     }
-    if (position.y < 0.05f) {
-        position.y = 0.05f;
-        velocity.y = 0f;
-        velocity *= 0.9f;
+    if (position.y < 0.05) {
+        position.y = 0.05;
+        velocity.y = 0;
+        velocity *= 0.9;
     }
 
     pointOut[i].velocity = velocity;
@@ -185,7 +185,7 @@ vec3 calcRelaxationDirection(vec4 pos1, vec4 pos2, float locked2, float maxResti
     relaxDir *= ((length - maxRestingLength) / length);// ensure direction vector to have the correct length
     if (locked2 == 0) {
         pointOut[i].velocity = vec4(0.0);
-        return relaxDir / 2f;// only move half the way because the other unlocked point will also be moved half the way
+        return relaxDir / 2;// only move half the way because the other unlocked point will also be moved half the way
     } else {
         pointOut[i].velocity = vec4(0.0);
         return relaxDir;// move all the way because the other point is locked
