@@ -45,7 +45,7 @@ public class FlagScene implements IScene {
     public void simulate() {
         counter += 0.005f;
         velocityFluid.z = 50 * Math.abs((float) Math.sin(counter));
-        massSpringCloth.simulate();
+        massSpringCloth.simulate(2);
     }
 
     @Override

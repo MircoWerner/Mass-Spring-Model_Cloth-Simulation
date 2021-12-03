@@ -46,7 +46,7 @@ public class HangingPlaneScene implements IScene {
 
     @Override
     public void simulate() {
-        massSpringCloth.simulate();
+        massSpringCloth.simulate(10);
     }
 
     @Override

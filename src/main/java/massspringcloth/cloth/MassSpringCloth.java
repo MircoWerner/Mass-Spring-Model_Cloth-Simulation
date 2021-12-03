@@ -229,9 +229,9 @@ public class MassSpringCloth {
         shaderProgram.unbind();
     }
 
-    public void simulate() {
+    public void simulate(int iterations) {
         float timeStep = 0.01f;
-        for (var i = 0; i < 10; i++) {
+        for (int i = 0; i < iterations; i++) {
             useComputeShaderProgram(timeStep, 0);
             // switch input and output buffer for next iteration
             int store = outputBufferId;

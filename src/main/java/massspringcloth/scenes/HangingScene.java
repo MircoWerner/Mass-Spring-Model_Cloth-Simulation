@@ -48,7 +48,7 @@ public class HangingScene implements IScene {
             counter += 0.005f * Math.random();
             velocityFluid.z = 20 * Math.abs((float) Math.sin(counter));
         }
-        massSpringCloth.simulate();
+        massSpringCloth.simulate(10);
     }
 
     @Override

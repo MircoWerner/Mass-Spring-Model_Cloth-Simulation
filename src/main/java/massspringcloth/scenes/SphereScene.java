@@ -66,7 +66,7 @@ public class SphereScene implements IScene {
 
     @Override
     public void simulate() {
-        massSpringCloth.simulate();
+        massSpringCloth.simulate(10);
     }
 
     @Override
