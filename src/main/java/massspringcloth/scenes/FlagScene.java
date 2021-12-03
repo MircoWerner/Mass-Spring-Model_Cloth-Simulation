@@ -1,31 +1,30 @@
 package massspringcloth.scenes;
 
+import massspringcloth.cloth.MassSpringCloth;
+import massspringcloth.cloth.MassSpringModel;
+import massspringcloth.cloth.Point;
+import org.joml.SimplexNoise;
 import org.joml.Vector3f;
 import renderengine.camera.ACamera;
 import renderengine.camera.ThirdPersonCamera;
 import renderengine.engine.Window;
 import renderengine.entities.Light;
-import massspringcloth.cloth.MassSpringCloth;
-import massspringcloth.cloth.MassSpringModel;
-import massspringcloth.cloth.Point;
-import org.joml.SimplexNoise;
 
 /**
  * @author Mirco Werner
  */
-public class HangingScene implements IScene {
+public class FlagScene implements IScene {
     private final MassSpringCloth massSpringCloth;
-    private final Vector3f velocityFluid = new Vector3f(0f, 0f, 0f);
-    private boolean windEnabled = false;
+    private final Vector3f velocityFluid = new Vector3f(-70f, 0f, 0f);
     private float counter = 0;
 
-    public HangingScene(ThirdPersonCamera camera) throws Exception {
-        int width = 20;
+    public FlagScene(ThirdPersonCamera camera) throws Exception {
+        int width = 30;
         int height = 20;
         Point[][] points = new Point[width][height];
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
-                points[w][h] = new Point(w - width / 2f, 50 + h - height / 2f, 0.1f * SimplexNoise.noise(w, h), 0, 0, 0, h == height - 1 && (w == 0 || w == width - 1) ? 1 : 0);
+                points[w][h] = new Point(w - width / 2f, 50 + h - height / 2f, 0.1f * SimplexNoise.noise(w, h), 0, 0, 0, (h == 0 || h == height - 1) && w == 0 ? 1 : 0);
             }
         }
 
@@ -44,25 +43,13 @@ public class HangingScene implements IScene {
 
     @Override
     public void simulate() {
-        if (windEnabled) {
-            counter += 0.005f * Math.random();
-            velocityFluid.z = 20 * Math.abs((float) Math.sin(counter));
-        }
+        counter += 0.005f;
+        velocityFluid.z = 50 * Math.abs((float) Math.sin(counter));
         massSpringCloth.simulate();
     }
 
     @Override
     public void render(Window window, ACamera camera, Light light) {
         massSpringCloth.render(window, camera, light);
-    }
-
-    public void toggleWindEnabled() {
-        windEnabled = !windEnabled;
-        velocityFluid.set(0);
-        counter = 0;
-    }
-
-    public boolean isWindEnabled() {
-        return windEnabled;
     }
 }

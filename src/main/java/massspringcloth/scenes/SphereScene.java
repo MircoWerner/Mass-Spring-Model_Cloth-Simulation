@@ -1,17 +1,17 @@
 package massspringcloth.scenes;
 
+import massspringcloth.cloth.MassSpringCloth;
+import massspringcloth.cloth.MassSpringModel;
+import massspringcloth.cloth.Point;
+import org.joml.Vector3f;
 import renderengine.camera.ACamera;
 import renderengine.camera.ThirdPersonCamera;
 import renderengine.engine.Window;
 import renderengine.entities.Entity;
 import renderengine.entities.Light;
-import massspringcloth.cloth.MassSpringCloth;
-import massspringcloth.cloth.MassSpringModel;
-import massspringcloth.cloth.Point;
 import renderengine.mesh.OBJLoader;
 import renderengine.mesh.Texture;
 import renderengine.mesh.TexturedModel;
-import org.joml.SimplexNoise;
 import renderengine.renderer.ModelRenderer;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class SphereScene implements IScene {
             }
         }
 
-        massSpringCloth = new MassSpringCloth(new MassSpringModel(width, height, points), -1, true, 1, 0.8f, 100);
+        massSpringCloth = new MassSpringCloth(new MassSpringModel(width, height, points), -1, true, 1, 0.8f, new Vector3f(0), 100);
 
         modelRenderer = new ModelRenderer();
 

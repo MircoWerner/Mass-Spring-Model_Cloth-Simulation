@@ -14,19 +14,22 @@ import renderengine.entities.Light;
 public class SimulationController {
     private ESimulationMode simulationMode;
     private IScene scene;
+    private ESceneType sceneType;
 
     private final ThirdPersonCamera camera;
 
     public SimulationController(ThirdPersonCamera camera) throws Exception {
         this.camera = camera;
         scene = new HangingScene(camera);
+        sceneType = ESceneType.HANGING;
     }
 
     public void switchScene(ESceneType sceneType) throws Exception {
         if (scene != null) {
             scene.destruct();
         }
-        this.scene = ESceneType.createScene(sceneType, camera);
+        scene = ESceneType.createScene(sceneType, camera);
+        this.sceneType = sceneType;
     }
 
     public void simulate() {
@@ -55,5 +58,18 @@ public class SimulationController {
         if (scene != null) {
             scene.destruct();
         }
+    }
+
+    public void toggleWindEnabled() {
+        if (sceneType == ESceneType.HANGING) {
+            ((HangingScene) scene).toggleWindEnabled();
+        }
+    }
+
+    public boolean isWindEnabled() {
+        if (sceneType == ESceneType.HANGING) {
+            return ((HangingScene) scene).isWindEnabled();
+        }
+        return false;
     }
 }

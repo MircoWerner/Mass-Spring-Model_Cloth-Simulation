@@ -41,15 +41,16 @@ layout(binding = 4, std430) buffer renderDataTangentBuffer {
     RenderDataTangent renderDataTangent[];
 };
 
-uniform float time; // time step for integration
+uniform float time;// time step for integration
 uniform int normalSign;// normal orientation \in {-1,1}
-uniform int sphereEnabled; // 1 if sphere collisions are enabled, 0 otherwise
-uniform int width; // amount of points
-uniform int height; // amount of points
-uniform float mass; // mass of one point
-uniform float viscousDamping; // damping constant >= 0, higher damping constant causes more friction
-uniform float springConstant; // spring constant >= 0, higher spring constant makes cloth more stiff
-uniform int relaxation; // 1 if this compute shader call is for relaxation of the joints, 0 if call is for applying forces
+uniform int sphereEnabled;// 1 if sphere collisions are enabled, 0 otherwise
+uniform int width;// amount of points
+uniform int height;// amount of points
+uniform float mass;// mass of one point
+uniform float viscousDamping;// damping constant >= 0, higher damping constant causes more friction
+uniform vec3 velocityFluid; // velocity of a viscous fluid like wind or water (used for viscous interaction force)
+uniform float springConstant;// spring constant >= 0, higher spring constant makes cloth more stiff
+uniform int relaxation;// 1 if this compute shader call is for relaxation of the joints, 0 if call is for applying forces
 
 const float restingLengthHorizontal = 1;
 const float maxRestingLengthHorizontal = 1.1f * restingLengthHorizontal;
@@ -94,7 +95,10 @@ vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec2 uv3) 
 
 void applyForce(uvec2 id, uint i) {
     // external force
-    vec4 force = vec4(0, -mass * gravity, 0, 0) + pointIn[i].velocity * -viscousDamping;
+    vec3 oldNormal = renderDataNormal[i].normal.xyz;
+    vec3 oldVelocity = pointIn[i].velocity.xyz;
+    vec4 viscousInteractionForce = vec4(-dot(oldNormal, velocityFluid - oldVelocity) * oldNormal, 0.0);
+    vec4 force = vec4(0, -mass * gravity, 0, 0) + pointIn[i].velocity * -viscousDamping + viscousInteractionForce;
 
     // internal force
     // HORIZONTAL/VERTICAL
@@ -157,10 +161,15 @@ void applyForce(uvec2 id, uint i) {
     // collision
     if (sphereEnabled != 0) {
         vec3 toSphere = position.xyz - sphere;
-        if (length(toSphere) < sphereRadius + 0.05) {
-            position.xyz = sphere + normalize(toSphere) * (sphereRadius + 0.05);
-            velocity = vec4(0.0);
+        if (length(toSphere) < sphereRadius + 0.05f) {
+            position.xyz = sphere + normalize(toSphere) * (sphereRadius + 0.05f);
+            velocity *= 0.9f;
         }
+    }
+    if (position.y < 0.05f) {
+        position.y = 0.05f;
+        velocity.y = 0f;
+        velocity *= 0.9f;
     }
 
     pointOut[i].velocity = velocity;
@@ -173,13 +182,13 @@ vec3 calcRelaxationDirection(vec4 pos1, vec4 pos2, float locked2, float maxResti
     if (length < maxRestingLength + restingLengthEpsilon) { // only relax if it is too long (plus some epsilon)
         return vec3(0.0);
     }
-    relaxDir *= ((length - maxRestingLength) / length); // ensure direction vector to have the correct length
+    relaxDir *= ((length - maxRestingLength) / length);// ensure direction vector to have the correct length
     if (locked2 == 0) {
         pointOut[i].velocity = vec4(0.0);
-        return relaxDir / 2f; // only move half the way because the other unlocked point will also be moved half the way
+        return relaxDir / 2f;// only move half the way because the other unlocked point will also be moved half the way
     } else {
         pointOut[i].velocity = vec4(0.0);
-        return relaxDir; // move all the way because the other point is locked
+        return relaxDir;// move all the way because the other point is locked
     }
 }
 

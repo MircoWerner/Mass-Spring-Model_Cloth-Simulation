@@ -46,6 +46,7 @@ public class MassSpringCloth {
     private final int normalSign;
     private final float mass;
     private final float viscousDamping;
+    private final Vector3f velocityFluid;
     private final float springConstant;
     private final int width;
     private final int height;
@@ -54,11 +55,12 @@ public class MassSpringCloth {
 
     private final Entity entity = new Entity();
 
-    public MassSpringCloth(MassSpringModel massSpringModel, int normalSign, boolean sphereEnabled, float mass, float viscousDamping, float springConstant) throws Exception {
+    public MassSpringCloth(MassSpringModel massSpringModel, int normalSign, boolean sphereEnabled, float mass, float viscousDamping, Vector3f velocityFluid, float springConstant) throws Exception {
         this.normalSign = normalSign;
         this.sphereEnabled = sphereEnabled;
         this.mass = mass;
         this.viscousDamping = viscousDamping;
+        this.velocityFluid = velocityFluid;
         this.springConstant = springConstant;
         this.width = massSpringModel.getWidth();
         this.height = massSpringModel.getHeight();
@@ -143,6 +145,7 @@ public class MassSpringCloth {
         computeProgram.createUniform("height");
         computeProgram.createUniform("mass");
         computeProgram.createUniform("viscousDamping");
+        computeProgram.createUniform("velocityFluid");
         computeProgram.createUniform("springConstant");
         computeProgram.createUniform("relaxation");
         computeProgram.unbind();
@@ -254,6 +257,7 @@ public class MassSpringCloth {
         computeProgram.setUniform("height", height);
         computeProgram.setUniform("mass", mass);
         computeProgram.setUniform("viscousDamping", viscousDamping);
+        computeProgram.setUniform("velocityFluid", velocityFluid);
         computeProgram.setUniform("springConstant", springConstant);
         computeProgram.setUniform("relaxation", relaxation);
 

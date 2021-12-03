@@ -7,14 +7,16 @@ import renderengine.camera.ThirdPersonCamera;
  */
 public enum ESceneType {
     HANGING,
-    FLAG,
-    SPHERE;
+    HANGING_PLANE,
+    SPHERE,
+    FLAG;
 
     public static IScene createScene(ESceneType scene, ThirdPersonCamera camera) throws Exception {
         return switch (scene) {
             case HANGING -> new HangingScene(camera);
+            case HANGING_PLANE -> new HangingPlaneScene(camera);
             case SPHERE -> new SphereScene(camera);
-            default -> null;
+            case FLAG -> new FlagScene(camera);
         };
     }
 }
