@@ -20,6 +20,7 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 import static org.lwjgl.opengl.GL42.GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT;
 import static org.lwjgl.opengl.GL42.glMemoryBarrier;
+import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BARRIER_BIT;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 
 /**
@@ -143,9 +144,17 @@ public class MassSpringCloth {
         computeProgram.createUniform("mass");
         computeProgram.createUniform("viscousDamping");
         computeProgram.createUniform("springConstant");
+        computeProgram.createUniform("relaxation");
         computeProgram.unbind();
 
-        useComputeShaderProgram(0);
+        useComputeShaderProgram(0, 0);
+        int store = outputBufferId;
+        outputBufferId = inputBufferId;
+        inputBufferId = store;
+        useComputeShaderProgram(0, 1);
+        store = outputBufferId;
+        outputBufferId = inputBufferId;
+        inputBufferId = store;
     }
 
     private void createComputeShaderBuffers(MassSpringModel model) {
@@ -215,21 +224,26 @@ public class MassSpringCloth {
         textureNormalMap.unbind();
 
         shaderProgram.unbind();
-
-        // switch input and output buffer for next iteration
-        int store = outputBufferId;
-        outputBufferId = inputBufferId;
-        inputBufferId = store;
     }
 
     public void simulate() {
         float timeStep = 0.01f;
-        for (var i = 0; i < 1000; ++i) {
-            useComputeShaderProgram(timeStep);
+        for (var i = 0; i < 10; i++) {
+            useComputeShaderProgram(timeStep, 0);
+            // switch input and output buffer for next iteration
+            int store = outputBufferId;
+            outputBufferId = inputBufferId;
+            inputBufferId = store;
+
+            useComputeShaderProgram(timeStep, 1);
+            // switch input and output buffer for next iteration
+            store = outputBufferId;
+            outputBufferId = inputBufferId;
+            inputBufferId = store;
         }
     }
 
-    private void useComputeShaderProgram(float time) {
+    private void useComputeShaderProgram(float time, int relaxation) {
         computeProgram.bind();
 
         // set uniforms
@@ -241,6 +255,7 @@ public class MassSpringCloth {
         computeProgram.setUniform("mass", mass);
         computeProgram.setUniform("viscousDamping", viscousDamping);
         computeProgram.setUniform("springConstant", springConstant);
+        computeProgram.setUniform("relaxation", relaxation);
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, inputBufferId);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, outputBufferId);
@@ -250,7 +265,8 @@ public class MassSpringCloth {
 
         computeProgram.dispatch(width, height);
 
-        glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+        glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT); // wait until data is written to the vbos
+        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT); // wait until data is written to the output buffer
 
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, 0);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, 0);

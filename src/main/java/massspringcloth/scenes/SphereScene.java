@@ -34,7 +34,7 @@ public class SphereScene implements IScene {
         Point[][] points = new Point[width][height];
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
-                points[w][h] = new Point(w - width / 2f, 50 + 0.1f * SimplexNoise.noise(w, h), h - height / 2f, 0, -25, 0, 0);
+                points[w][h] = new Point(w - width / 2f, 50, h - height / 2f, 0, 0, 0, 0);
             }
         }
 
