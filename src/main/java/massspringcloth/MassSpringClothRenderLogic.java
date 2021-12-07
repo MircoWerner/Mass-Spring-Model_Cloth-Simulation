@@ -21,6 +21,8 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 
 /**
+ * The methods of this class are called for initialization of the rendering and for every render iteration.
+ *
  * @author Mirco Werner
  */
 public class MassSpringClothRenderLogic implements IRenderLogic {
@@ -41,12 +43,19 @@ public class MassSpringClothRenderLogic implements IRenderLogic {
         cameraInc = new Vector3f();
     }
 
+    /**
+     * This method is called once after the window is created.
+     * Creates terrain, camera, light, the simulation controller and the GUI.
+     *
+     * @param window window of the application
+     * @throws Exception if an exception occurs in the initialization process
+     */
     @Override
     public void init(Window window) throws Exception {
         terrainRenderer = new TerrainRenderer();
         camera = new ThirdPersonCamera();
 
-        light = new Light(new Vector3f(100, 80, 50), new Vector3f(1f, 1f, 1f));
+        light = new Light(new Vector3f(100, 80, 50), new Vector3f(1f, 1f, 1f)); // white light
 
         {
             Texture texture = Texture.loadTexture(Objects.requireNonNull(MassSpringClothRenderLogic.class.getClassLoader().getResourceAsStream("textures/scifi_panel_basecolor.png")));
@@ -70,6 +79,13 @@ public class MassSpringClothRenderLogic implements IRenderLogic {
         userInterface = new UserInterface(window, simulationController);
     }
 
+    /**
+     * This method is called first in every iteration.
+     * It handles the keyboard and mouse inputs for camera updates and handles GUI events.
+     *
+     * @param window     window of the application
+     * @param mouseInput stores information about mouse events
+     */
     @Override
     public void input(Window window, MouseInput mouseInput) {
         int factor = 1;
@@ -106,14 +122,23 @@ public class MassSpringClothRenderLogic implements IRenderLogic {
         }
     }
 
+    /**
+     * This method is called second in every iteration.
+     * It updates the camera based on the keyboard and mouse inputs.
+     * It calls the simulation of the cloth.
+     *
+     * @param window             window of the application
+     * @param timeSinceLastFrame time in milliseconds
+     * @param mouseInput         stores information about mouse events
+     */
     @Override
     public void update(Window window, long timeSinceLastFrame, MouseInput mouseInput) {
         float increment = timeSinceLastFrame / 1000f;
 
-        // Update camera position
+        // update camera position
         camera.moveCenter(cameraInc.x * CAMERA_POS_STEP * increment, cameraInc.y * CAMERA_POS_STEP * increment, cameraInc.z * CAMERA_POS_STEP * increment);
 
-        // Update camera based on mouse
+        // update camera based on mouse
         if (mouseInput.isLeftButtonPressed()) {
             Vector2f rotVec = mouseInput.getMotionVec();
             camera.move(0.0f, rotVec.x * MOUSE_SENSITIVITY * increment, -rotVec.y * MOUSE_SENSITIVITY * increment);
@@ -126,21 +151,31 @@ public class MassSpringClothRenderLogic implements IRenderLogic {
         simulationController.simulate();
     }
 
+    /**
+     * This method is called last in every iteration.
+     * It renders all entities in the scene.
+     *
+     * @param window window of the application
+     */
     @Override
     public void render(Window window) {
-        glDisable(GL_CULL_FACE);
+        glDisable(GL_CULL_FACE); // render back of the cloth too
         if (window.isKeyPressed(GLFW_KEY_T)) {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // enable wireframe rendering
         }
-        simulationController.render(window, camera, light);
+        simulationController.render(window, light); // render cloth
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glEnable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE); // enable back culling again
 
         terrainRenderer.render(window, camera, light, terrains);
 
         userInterface.render();
     }
 
+    /**
+     * This method is called when the window is closed.
+     * The renderers are cleaned up.
+     */
     @Override
     public void cleanUp() {
         terrainRenderer.cleanUp();
@@ -149,6 +184,12 @@ public class MassSpringClothRenderLogic implements IRenderLogic {
         userInterface.cleanUp();
     }
 
+    /**
+     * This method is called when the window is resized.
+     * The GUI will be resized properly.
+     *
+     * @param window window of the application
+     */
     @Override
     public void onWindowResized(Window window) {
         userInterface.onWindowResized(window);

@@ -240,7 +240,7 @@ void main() {
 
     uint i = id.y * width + id.x;
 
-    if (i > width * height) {
+    if (i >= width * height) {
         return;
     }
 

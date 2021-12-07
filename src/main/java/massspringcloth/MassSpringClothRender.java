@@ -4,6 +4,9 @@ import renderengine.engine.IRenderLogic;
 import renderengine.engine.RenderEngine;
 
 /**
+ * Main method of the program.
+ * Creates the window and starts the rendering.
+ *
  * @author Mirco Werner
  */
 public class MassSpringClothRender {

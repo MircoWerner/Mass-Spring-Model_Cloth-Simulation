@@ -1,6 +1,8 @@
 package massspringcloth.cloth;
 
 /**
+ * Creates the arrays with the initial positions, velocities etc. for the buffer creation (input and output buffer of the compute shader, vbos of the vertex shader).
+ *
  * @author Mirco Werner
  */
 public class MassSpringModel {
@@ -11,12 +13,24 @@ public class MassSpringModel {
     private float[] tex;
     private int[] indices;
 
+    /**
+     * Creates the arrays.
+     *
+     * @param width  amount of horizontal points of the cloth
+     * @param height amount of vertical points of the cloth
+     * @param points initial values
+     */
     public MassSpringModel(int width, int height, Point[][] points) {
         this.width = width;
         this.height = height;
         create(points);
     }
 
+    /**
+     * Creates the float arrays for the buffer creation.
+     *
+     * @param pointInitialization initial values
+     */
     private void create(Point[][] pointInitialization) {
         points = new float[width * height * 12];
         tex = new float[width * height * 2];

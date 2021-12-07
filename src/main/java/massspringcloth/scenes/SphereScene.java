@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * Defines a scene where cloth is falling on a sphere.
+ *
  * @author Mirco Werner
  */
 public class SphereScene implements IScene {
@@ -28,12 +30,19 @@ public class SphereScene implements IScene {
     private final ModelRenderer modelRenderer;
     private final Map<TexturedModel, List<Entity>> modeledEntities = new HashMap<>();
 
+    /**
+     * Creates the initial state of the cloth and the sphere entity.
+     *
+     * @param camera camera of the scene
+     * @throws Exception if the scene creation fails
+     */
     public SphereScene(ThirdPersonCamera camera) throws Exception {
         int width = 30;
         int height = 30;
         Point[][] points = new Point[width][height];
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
+                // create cloth in the xz-plane
                 points[w][h] = new Point(w - width / 2f, 50, h - height / 2f, 0, 0, 0, 0);
             }
         }

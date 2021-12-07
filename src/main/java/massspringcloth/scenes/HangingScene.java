@@ -11,20 +11,29 @@ import massspringcloth.cloth.Point;
 import org.joml.SimplexNoise;
 
 /**
+ * Defines a scene where cloth is hanging from two points. Wind can be enabled optionally.
+ *
  * @author Mirco Werner
  */
 public class HangingScene implements IScene {
     private final MassSpringCloth massSpringCloth;
-    private final Vector3f velocityFluid = new Vector3f(0f, 0f, 0f);
+    private final Vector3f velocityFluid = new Vector3f(0f, 0f, 0f); // wind (if enabled)
     private boolean windEnabled = false;
     private float counter = 0;
 
+    /**
+     * Creates the initial state of the cloth.
+     *
+     * @param camera camera of the scene
+     * @throws Exception if the scene creation fails
+     */
     public HangingScene(ThirdPersonCamera camera) throws Exception {
         int width = 20;
         int height = 20;
         Point[][] points = new Point[width][height];
         for (int h = 0; h < height; h++) {
             for (int w = 0; w < width; w++) {
+                // create cloth in xy-plane, lock top left and top right point
                 points[w][h] = new Point(w - width / 2f, 50 + h - height / 2f, 0.1f * SimplexNoise.noise(w, h), 0, 0, 0, h == height - 1 && (w == 0 || w == width - 1) ? 1 : 0);
             }
         }
@@ -46,7 +55,7 @@ public class HangingScene implements IScene {
     public void simulate() {
         if (windEnabled) {
             counter += 0.005f * Math.random();
-            velocityFluid.z = 20 * Math.abs((float) Math.sin(counter));
+            velocityFluid.z = 20 * Math.abs((float) Math.sin(counter)); // change wind in z direction by time
         }
         massSpringCloth.simulate(10);
     }
@@ -56,6 +65,9 @@ public class HangingScene implements IScene {
         massSpringCloth.render(window, camera, light);
     }
 
+    /**
+     * Enable or disable wind.
+     */
     public void toggleWindEnabled() {
         windEnabled = !windEnabled;
         velocityFluid.set(0);

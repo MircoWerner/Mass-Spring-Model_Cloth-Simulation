@@ -24,6 +24,10 @@ import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BARRIER_BIT;
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 
 /**
+ * This class allows to execute the simulation (the compute shader) and to render the cloth.
+ * Therefore, the compute, vertex and fragment shaders and the required buffers are created.
+ * The shaders are defined in the resources/shaders package.
+ *
  * @author Mirco Werner
  */
 public class MassSpringCloth {
@@ -55,6 +59,18 @@ public class MassSpringCloth {
 
     private final Entity entity = new Entity();
 
+    /**
+     * Creates and initializes the cloth object with the given parameters.
+     *
+     * @param massSpringModel model containing the initial positions etc.
+     * @param normalSign      normal orientation \in {-1,1}
+     * @param sphereEnabled   true if sphere collisions are enabled, false otherwise
+     * @param mass            mass of one point
+     * @param viscousDamping  damping constant >= 0, higher damping constant causes more friction
+     * @param velocityFluid   velocity of a viscous fluid like wind or water (used for viscous interaction force)
+     * @param springConstant  spring constant >= 0, higher spring constant makes cloth more stiff
+     * @throws Exception if the creation of the object fails
+     */
     public MassSpringCloth(MassSpringModel massSpringModel, int normalSign, boolean sphereEnabled, float mass, float viscousDamping, Vector3f velocityFluid, float springConstant) throws Exception {
         this.normalSign = normalSign;
         this.sphereEnabled = sphereEnabled;
@@ -67,6 +83,12 @@ public class MassSpringCloth {
         init(massSpringModel);
     }
 
+    /**
+     * Creates the compute, vertex and fragment shader.
+     *
+     * @param massSpringModel model containing the initial positions etc.
+     * @throws Exception if the creation of the object fails
+     */
     private void init(MassSpringModel massSpringModel) throws Exception {
         shaderProgram = new ShaderProgram();
         shaderProgram.createVertexShader("shaders/cloth_vert.glsl");
@@ -125,7 +147,7 @@ public class MassSpringCloth {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesVboId);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
 
-        // Unbind
+        // unbind
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
@@ -150,20 +172,27 @@ public class MassSpringCloth {
         computeProgram.createUniform("relaxation");
         computeProgram.unbind();
 
-        useComputeShaderProgram(0, 0);
+        useComputeShaderProgram(0, 0); // execute one time that the vbos contain valid data that can be rendered
+        // switch input and output buffer for next iteration
         int store = outputBufferId;
         outputBufferId = inputBufferId;
         inputBufferId = store;
         useComputeShaderProgram(0, 1);
+        // switch input and output buffer for next iteration
         store = outputBufferId;
         outputBufferId = inputBufferId;
         inputBufferId = store;
     }
 
+    /**
+     * Creates the input and output buffer of the compute shader.
+     *
+     * @param model
+     */
     private void createComputeShaderBuffers(MassSpringModel model) {
         // input buffer
         {
-            FloatBuffer verticesBuffer = BufferUtils.createFloatBuffer(model.getPoints().length);
+            FloatBuffer verticesBuffer = BufferUtils.createFloatBuffer(model.getPoints().length); // put initial data in the input buffer
             verticesBuffer.put(model.getPoints()).flip();
             inputBufferId = glGenBuffers();
             glBindBuffer(GL_ARRAY_BUFFER, inputBufferId);
@@ -193,6 +222,13 @@ public class MassSpringCloth {
     private static final float Z_NEAR = 0.01f;
     private static final float Z_FAR = 1000.0f;
 
+    /**
+     * Renders the cloth.
+     *
+     * @param window window of the application
+     * @param camera camera of the scene
+     * @param light light in the scene
+     */
     public void render(Window window, ACamera camera, Light light) {
         shaderProgram.bind();
 
@@ -205,9 +241,9 @@ public class MassSpringCloth {
         shaderProgram.setUniform("lightPosition", light.getPosition());
         shaderProgram.setUniform("lightColor", light.getColor());
 
-        glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0); // cloth texture
         texture.bind();
-        glActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1); // normal map
         textureNormalMap.bind();
 
         glBindVertexArray(vaoId);
@@ -229,16 +265,21 @@ public class MassSpringCloth {
         shaderProgram.unbind();
     }
 
+    /**
+     * Executes the simulation (the compute shader).
+     *
+     * @param iterations how often the simulation is executed
+     */
     public void simulate(int iterations) {
-        float timeStep = 0.01f;
+        float timeStep = 0.01f; // maybe make this depend on the timeSinceLastFrame
         for (int i = 0; i < iterations; i++) {
-            useComputeShaderProgram(timeStep, 0);
+            useComputeShaderProgram(timeStep, 0); // apply forces
             // switch input and output buffer for next iteration
             int store = outputBufferId;
             outputBufferId = inputBufferId;
             inputBufferId = store;
 
-            useComputeShaderProgram(timeStep, 1);
+            useComputeShaderProgram(timeStep, 1); // relaxation, adjust too long joints, make the model more stable
             // switch input and output buffer for next iteration
             store = outputBufferId;
             outputBufferId = inputBufferId;
@@ -246,6 +287,12 @@ public class MassSpringCloth {
         }
     }
 
+    /**
+     * Executes the compute shader.
+     *
+     * @param time simulation time step
+     * @param relaxation 0 if this is an applying-force call, any other number otherwise (relaxation call)
+     */
     private void useComputeShaderProgram(float time, int relaxation) {
         computeProgram.bind();
 
@@ -281,6 +328,9 @@ public class MassSpringCloth {
         computeProgram.unbind();
     }
 
+    /**
+     * Frees all memory allocated for the buffers.
+     */
     public void cleanUp() {
         glDeleteBuffers(vertexVboId);
         glDeleteBuffers(textureVboId);

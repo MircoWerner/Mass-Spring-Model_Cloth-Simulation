@@ -15,6 +15,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Defines the elements of the GUI and their behavior.
+ * This class also provides methods to render the GUI.
+ *
  * @author Mirco Werner
  */
 public class UserInterface {
@@ -31,6 +34,13 @@ public class UserInterface {
     private Texture textureWind;
     private Texture textureWindActive;
 
+    /**
+     * Creates and initializes the GUI.
+     *
+     * @param window               window of the application
+     * @param simulationController the simulation controller to retrieve information about the currently loaded scene to display in the GUI
+     * @throws Exception if texture loading fails
+     */
     public UserInterface(Window window, SimulationController simulationController) throws Exception {
         this.simulationController = simulationController;
 
@@ -39,6 +49,13 @@ public class UserInterface {
         init(window);
     }
 
+    /**
+     * Creates the buttons of the GUI and their behavior to switch scenes and start/pause the simulation.
+     * When clicking on a scene button, the scene will be loaded or reloaded if already selected.
+     *
+     * @param window window of the application
+     * @throws Exception if texture loading fails
+     */
     public void init(Window window) throws Exception {
         playTexture = Texture.loadTexture("textures/gui/play.png");
         pauseTexture = Texture.loadTexture("textures/gui/pause.png");
@@ -136,28 +153,57 @@ public class UserInterface {
         guis.add(sceneFlagButton);
     }
 
+    /**
+     * Pause the simulation.
+     */
     private void pause() {
         simulationController.setSimulationMode(ESimulationMode.NONE);
         playPauseButton.getMesh2D().setTexture(simulationController.getSimulationMode() == ESimulationMode.SIMULATION ? pauseTexture : playTexture);
     }
 
+    /**
+     * Enables or disables the wind button for the first scene.
+     *
+     * @param visible true if the wind button should be enabled, false otherwise
+     */
     private void setHangingWindEnabled(boolean visible) {
         sceneHangingWindButton.setEnabled(visible);
         sceneHangingWindButton.getMesh2D().setTexture(textureWind);
     }
 
+    /**
+     * Renders the GUI.
+     * Depth testing will be disabled. The GUI should be rendered on top of everything else. Therefore, make sure to render the GUI at last.
+     */
     public void render() {
         texture2DRenderer.render(guis);
     }
 
+    /**
+     * Call this method if the window is resized.
+     * All GUI components will be resized to keep their defined size in pixels.
+     *
+     * @param window window of the application
+     */
     public void onWindowResized(Window window) {
         guis.forEach(gui -> gui.onWindowResized(window));
     }
 
+    /**
+     * Call this method if the window is clicked (or hovered) with the mouse.
+     * The method determines if a GUI element is hit and the defined method of the GUI element is executed.
+     *
+     * @param action mouse action
+     * @param x pixel coordinate
+     * @param y pixel coordinate
+     */
     public void onMousePressed(Gui.Action action, float x, float y) {
         guis.forEach(gui -> gui.onAction(action, x, y));
     }
 
+    /**
+     * Clean up method for the renderer and the GUI components.
+     */
     public void cleanUp() {
         texture2DRenderer.cleanUp();
         guis.forEach(Gui::cleanUp);
