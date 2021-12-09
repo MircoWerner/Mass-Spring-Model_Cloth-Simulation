@@ -50,7 +50,7 @@ uniform float mass;// mass of one point
 uniform float viscousDamping;// damping constant >= 0, higher damping constant causes more friction
 uniform vec3 velocityFluid; // velocity of a viscous fluid like wind or water (used for viscous interaction force)
 uniform float springConstant;// spring constant >= 0, higher spring constant makes cloth more stiff
-uniform int relaxation;// 1 if this compute shader call is for relaxation of the joints, 0 if call is for applying forces
+uniform int state;// 0 => apply forces, 1 => relaxation of the joints, any other number => only write output buffers (and calculate normals, tangents etc.)
 
 const float restingLengthHorizontal = 1;
 const float maxRestingLengthHorizontal = 1.1 * restingLengthHorizontal;
@@ -95,6 +95,11 @@ vec3 calcTangent(vec3 pos1, vec3 pos2, vec3 pos3, vec2 uv1, vec2 uv2, vec2 uv3) 
 
 void applyForce(uvec2 id, uint i) {
     // external force
+    // Important: Taking the old normal might be dangerous in some situations. If the GPU does not initialize
+    // the renderDataNormal buffer with zeros, old data will be read during the first invocation of the compute shader.
+    // The viscousInteractionFoce might become unlimitedly high for some points, making them disappear.
+    // Solution: Initialize renderDataNormal buffer on the CPU side before the first invocation or make sure to call
+    // applyFore in the second invocation for the first time (when the buffer has been initialized by the compute shader).
     vec3 oldNormal = renderDataNormal[i].normal.xyz;
     vec3 oldVelocity = pointIn[i].velocity.xyz;
     vec4 viscousInteractionForce = vec4(-dot(oldNormal, velocityFluid - oldVelocity) * oldNormal, 0.0);
@@ -249,9 +254,9 @@ void main() {
     pointOut[i].data = pointIn[i].data;
 
     if (pointIn[i].data.x == 0) {
-        if (relaxation == 0) {
+        if (state == 0) {
             applyForce(id, i);
-        } else {
+        } else if (state == 1) {
             applyRelaxation(id, i);
         }
     }
